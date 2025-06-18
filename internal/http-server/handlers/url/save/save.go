@@ -79,7 +79,20 @@ func New(log *slog.Logger, urlSaver URLSaver) http.HandlerFunc {
 		// Если пользователь не указал алиас, генерируем случайный
 		alias := req.Alias
 		if alias == "" {
-			alias = random.NewRandomString(aliasLength)
+			maxAttempts := 3
+			for attempt := 0; attempt < maxAttempts; attempt++ {
+				alias = random.NewRandomString(aliasLength)
+				_, err = urlSaver.SaveURL(req.URL, alias)
+				if !errors.Is(err, storage.ErrURLExists) {
+					break
+				}
+				if attempt == maxAttempts-1 {
+					log.Error("failed to generate unique alias", slog.Int("attempts", maxAttempts))
+					render.Status(r, http.StatusInternalServerError)
+					render.JSON(w, r, resp.Error("failed to generate short URL"))
+					return
+				}
+			}
 		}
 
 		// Сохраняем URL в хранилище

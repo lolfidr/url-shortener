@@ -47,6 +47,8 @@ func main() {
 		os.Exit(1)
 	}
 
+	defer storage.Close()
+
 	router := chi.NewRouter()
 
 	router.Use(middleware.RequestID)
@@ -67,6 +69,8 @@ func main() {
 	router.Get("/{alias}", redirect.New(log, storage))
 
 	log.Info("starting server", slog.String("address", cfg.Address))
+	log.Debug("debug messages are enabled")
+	log.Error("error messages are enabled")
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
@@ -100,7 +104,6 @@ func main() {
 
 		return
 	}
-	storage.Close()
 
 	// TODO: close storage
 

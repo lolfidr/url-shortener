@@ -40,11 +40,11 @@ func New(log *slog.Logger, urlGetter URLGetter) http.HandlerFunc {
 
 		if errors.Is(err, storage.ErrURLNotFound) {
 			log.Info("url not found", "alias", alias)
-
+			render.Status(r, http.StatusNotFound) // Добавляем статус 404
 			render.JSON(w, r, resp.Error("not found"))
-
 			return
 		}
+
 		if err != nil {
 			log.Error("failed to get url", sl.Err(err))
 
